@@ -19,14 +19,7 @@ export class FormulaEvaluator {
   }
 
   /**
-    * place holder for the evaluator.   I am not sure what the type of the formula is yet 
-    * I do know that there will be a list of tokens so i will return the length of the array
-    * 
-    * I also need to test the error display in the front end so i will set the error message to
-    * the error messages found In GlobalDefinitions.ts
-    * 
-    * according to this formula.
-    * 
+
     7 tokens partial: "#ERR",
     8 tokens divideByZero: "#DIV/0!",
     9 tokens invalidCell: "#REF!",
@@ -35,51 +28,171 @@ export class FormulaEvaluator {
   12 tokens invalidOperator: "#ERR",
   13 missingParentheses: "#ERR",
   0 tokens emptyFormula: "#EMPTY!",
-
-                    When i get back from my quest to save the world from the evil thing i will fix.
-                      (if you are in a hurry you can fix it yourself)
-                               Sincerely 
-                               Bilbo
     * 
    */
 
   evaluate(formula: FormulaType) {
 
-
-    // set the this._result to the length of the formula
-
-    this._result = formula.length;
+    this._result = 0;
     this._errorMessage = "";
 
-    switch (formula.length) {
-      case 0:
-        this._errorMessage = ErrorMessages.emptyFormula;
-        break;
-      case 7:
-        this._errorMessage = ErrorMessages.partial;
-        break;
-      case 8:
-        this._errorMessage = ErrorMessages.divideByZero;
-        break;
-      case 9:
-        this._errorMessage = ErrorMessages.invalidCell;
-        break;
-      case 10:
+    //case 1: emptyFormula
+    if (formula.length == 0) { 
+      this._errorMessage = ErrorMessages.emptyFormula;
+      return;
+    }
+
+    // switch (formula.length) {
+    //   case 0:
+    //     this._errorMessage = ErrorMessages.emptyFormula;
+    //     break;
+    //   case 7:
+    //     this._errorMessage = ErrorMessages.partial;
+    //     break;
+    //   case 8:
+    //     this._errorMessage = ErrorMessages.divideByZero;
+    //     break;
+    //   case 9:
+    //     this._errorMessage = ErrorMessages.invalidCell;
+    //     break;
+    //   case 10:
+    //     this._errorMessage = ErrorMessages.invalidFormula;
+    //     break;
+    //   case 11:
+    //     this._errorMessage = ErrorMessages.invalidNumber;
+    //     break;
+    //   case 12:
+    //     this._errorMessage = ErrorMessages.invalidOperator;
+    //     break;
+    //   case 13:
+    //     this._errorMessage = ErrorMessages.missingParentheses;
+    //     break;
+    //   default:
+    //     this._errorMessage = "";
+    //     break;
+    // }
+    let ops = [];
+    let nums = [];
+
+    let cal_order_map = new Map<string, number>([
+      ["+", 1],
+      ["-", 1],
+      ["*", 2],
+      ["/", 2]
+    ]);
+
+    // nums.push(0); //if the first number is negative
+
+    for (let i = 0; i < formula.length; i++) {
+      let token = formula[i];
+
+      //token could be number, operator or cell
+
+      //token is number
+      if (this.isNumber(token)) {
+        nums.push(Number(token));
+
+        //token is cell
+      } else if (this.isCellReference(token)) {
+
+        let cell_value = this.getCellValue(token);
+
+        //if the cell has error
+        if (cell_value[1]) {
+          this._errorMessage = cell_value[1];
+          return;
+        }
+
+        nums.push(cell_value[0]);
+
+        //token is operators
+        //3 cases:
+        //case 1: operator is "("
+        //case 2: operator is ")"
+        //case 3: opertator is in "+-*/"
+      } else {
+        if (token == "(") {
+          ops.push(token);
+        } else if (token == ")") {
+          while (ops.length > 0 && ops[ops.length - 1] !== "(") {
+            this.calculate(nums, ops);
+            if (this._errorMessage) {
+              return;
+            }
+          }
+          ops.pop(); //pop up the "("
+        } else {
+          while (ops.length > 0 && ops[ops.length - 1] !== "(") {
+            let prevops = ops[ops.length - 1];
+            if (cal_order_map.get(prevops)! >= cal_order_map.get(token)!) {
+              this.calculate(nums, ops);
+              if (this._errorMessage) {
+                return;
+              }
+            } else {
+              break;
+            }
+          }
+          ops.push(token);
+        }
+      }
+      
+    }
+    
+    while (ops.length > 0) {
+      if (nums.length < 2 && ops[ops.length - 1] !== "(" && ops[ops.length - 1] !== ")") {
         this._errorMessage = ErrorMessages.invalidFormula;
-        break;
-      case 11:
-        this._errorMessage = ErrorMessages.invalidNumber;
-        break;
-      case 12:
-        this._errorMessage = ErrorMessages.invalidOperator;
-        break;
-      case 13:
+        return;
+      }
+      if (nums.length < 2 && (ops[ops.length - 1] == "(" || ops[ops.length - 1] !== ")")) {
         this._errorMessage = ErrorMessages.missingParentheses;
+        return;
+      }
+      this.calculate(nums, ops);
+    }
+
+    this._result = nums[nums.length - 1];
+  }
+
+  public calculate(nums: number[], ops: string[]) {
+
+    //if only one num in the stack, dont need to calculate
+    if (nums.length < 2) {
+      return;
+    }
+
+    //if no ops in the stack
+    if (ops.length == 0) { 
+      return;
+    }
+
+    let second_num = nums.pop()!;
+    let first_num = nums.pop()!;
+    let result = 0;
+
+    let operator = ops.pop();
+
+    switch (operator) { 
+      case "+":
+        result = first_num + second_num;
         break;
-      default:
-        this._errorMessage = "";
+      case "-":
+        result = first_num - second_num;
+        break;
+      case "*":
+        result = first_num * second_num;
+        break;
+      case "/":
+        if (second_num == 0) {
+          this._errorMessage = ErrorMessages.divideByZero;
+          break;
+        } else {
+          result = first_num / second_num;
+        }
         break;
     }
+
+    nums.push(result);
   }
 
   public get error(): string {
@@ -89,9 +202,6 @@ export class FormulaEvaluator {
   public get result(): number {
     return this._result;
   }
-
-
-
 
   /**
    * 

@@ -206,7 +206,6 @@ export class SpreadSheetController {
    */
   addToken(token: string, user: string): void {
 
-
     const userData = this._contributingUsers.get(user)!;
     if (!userData.isEditing) {
       return;
@@ -312,20 +311,21 @@ export class SpreadSheetController {
       return;
     }
     const userEditing = this._contributingUsers.get(user);
-    if (!userEditing) {
-      return;
-    }
-    if (userEditing.cellLabel === '') {
+    if (!userEditing!.isEditing) {
       return;
     }
 
-    userEditing.formulaBuilder.setFormula([]);
+    if (userEditing!.cellLabel === '') {
+      return;
+    }
+
+    userEditing!.formulaBuilder.setFormula([]);
     let cellBeingEdited = this._contributingUsers.get(user)?.cellLabel;
 
     // this should not empty but just in case throw error
     if (cellBeingEdited) {
       let cell = this._memory.getCellByLabel(cellBeingEdited);
-      cell.setFormula(userEditing.formulaBuilder.getFormula());
+      cell.setFormula(userEditing!.formulaBuilder.getFormula());
       this._memory.setCellByLabel(cellBeingEdited, cell);
     }
     this._calculationManager.evaluateSheet(this._memory);
@@ -476,7 +476,6 @@ export class SpreadSheetController {
         guiDisplayValues[outputRow][outputColumn] = memoryDisplayValues[outputColumn][outputRow];
       }
     }
-
 
     return guiDisplayValues;
 
