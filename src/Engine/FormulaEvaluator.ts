@@ -61,7 +61,7 @@ export class FormulaEvaluator {
       ["/", 2]
     ]);
 
-    // nums.push(0); //if the first number is negative
+    nums.push(0); //if the first number is negative
 
     let prev_token = null;
 
