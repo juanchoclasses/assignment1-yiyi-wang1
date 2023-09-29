@@ -32,13 +32,11 @@ export class FormulaEvaluator {
     //case 2: invalidFormula: formula is ending with operator
     if (["+", "-", "*", "/"].includes(formula[formula.length - 1])) {
       this._errorMessage = ErrorMessages.invalidFormula;
-      return;
     }
 
     //case 3: invalidFormula: formula is starting with operator
     if (["*", "/"].includes(formula[0])) {
       this._errorMessage = ErrorMessages.invalidFormula;
-      return;
     }
 
     //   case 7:
@@ -75,6 +73,7 @@ export class FormulaEvaluator {
 
         //the previous token must be "+-*/" or "(" before a number token
         if (prev_token && (prev_token === ")" || this.isNumber(prev_token) || this.isCellReference(prev_token))) {
+          this._result = nums[nums.length - 1];
           this._errorMessage = ErrorMessages.invalidFormula;
           return;
         }
@@ -85,6 +84,7 @@ export class FormulaEvaluator {
 
         //the previous token must be "+-*/" or "(" before a cell reference token
         if (prev_token && (prev_token === ")" || this.isNumber(prev_token) || this.isCellReference(prev_token))) {
+          this._result = nums[nums.length - 1];
           this._errorMessage = ErrorMessages.invalidFormula;
           return;
         }
@@ -107,34 +107,38 @@ export class FormulaEvaluator {
       } else {
         if (token == "(") {
           //the previous token must be "+-*/" or "(" before a parenthesis
-          if (prev_token && (prev_token === ")" || this.isNumber(prev_token) || this.isCellReference(prev_token))){
+          if (prev_token && (prev_token === ")" || this.isNumber(prev_token) || this.isCellReference(prev_token))) {
+            this._result = nums[nums.length - 1];
             this._errorMessage = ErrorMessages.invalidFormula;
             return;
           }
           ops.push(token);
         } else if (token == ")") {
           //the previous token must be a number token or cell reference or ")" before a parenthesis
-          if (prev_token && ["+", "-", "*", "/"].includes(prev_token)){
+          if (prev_token && ["+", "-", "*", "/"].includes(prev_token)) {
+            this._result = nums[nums.length - 1];
             this._errorMessage = ErrorMessages.invalidFormula;
             return;
           }
 
           if (prev_token && prev_token === "(") {
             this._errorMessage = ErrorMessages.missingParentheses;
+            this._result = nums[nums.length - 1];
             return;
           }
 
           while (ops.length > 0 && ops[ops.length - 1] !== "(") {
             this.calculate(nums, ops);
             if (this._errorMessage) {
-              return;
+              break;
             }
           }
           ops.pop(); //pop up the "("
         } else {
 
           //the previous token must be number token or cell reference or ")" before "+-*/" operator
-          if (prev_token && ["+", "-", "*", "/", "("].includes(prev_token)){
+          if (prev_token && ["+", "-", "*", "/", "("].includes(prev_token)) {
+            this._result = nums[nums.length - 1];
             this._errorMessage = ErrorMessages.invalidFormula;
             return;
           }
@@ -144,7 +148,7 @@ export class FormulaEvaluator {
             if (cal_order_map.get(prevops)! >= cal_order_map.get(token)!) {
               this.calculate(nums, ops);
               if (this._errorMessage) {
-                return;
+                break;
               }
             } else {
               break;
@@ -160,11 +164,16 @@ export class FormulaEvaluator {
     while (ops.length > 0) {
       this.calculate(nums, ops);
       if (this._errorMessage) {
-        return;
+        break;
       }
     }
 
-    this._result = nums[nums.length - 1];
+    if (this._errorMessage != ErrorMessages.divideByZero) {
+      this._result = nums[nums.length - 1];
+    } else {
+      this._result = Infinity;
+    }
+
   }
 
   public calculate(nums: number[], ops: string[]) {
@@ -189,8 +198,6 @@ export class FormulaEvaluator {
       return;
     }
 
-
-
     let second_num = nums.pop()!;
     let first_num = nums.pop()!;
     let result = 0;
@@ -209,7 +216,6 @@ export class FormulaEvaluator {
         break;
       case "/":
         if (second_num == 0) {
-          this._result = Infinity;
           this._errorMessage = ErrorMessages.divideByZero;
           break;
         } else {
