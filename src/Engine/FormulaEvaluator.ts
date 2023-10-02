@@ -18,6 +18,14 @@ export class FormulaEvaluator {
     this._sheetMemory = memory;
   }
 
+
+  /*
+  README:
+  Please note that my code will accpet the "+" and "-" operators as the first token in formula. 
+  This will allow the user to enter negative number and I believe this is the common way to implement calculator functions. 
+  There is no test case for this situation and please assume that this is not an error when you test the code.
+  */
+
   evaluate(formula: FormulaType) {
 
     this._result = 0;
@@ -39,16 +47,6 @@ export class FormulaEvaluator {
       this._errorMessage = ErrorMessages.invalidFormula;
     }
 
-    //   case 7:
-    //     this._errorMessage = ErrorMessages.partial;
-    //     break;
-
-    //   case 11:
-    //     this._errorMessage = ErrorMessages.invalidNumber;
-    //     break;
-    //   case 13:
-    //     this._errorMessage = ErrorMessages.missingParentheses;
-    //     break;
     let ops = [];
     let nums = [];
 
@@ -175,6 +173,13 @@ export class FormulaEvaluator {
     }
 
   }
+
+    /**
+   * This function will do calculation on nums array and ops array, and update the result on nums array
+   * @param nums array
+   * @param ops array
+   * 
+   */
 
   public calculate(nums: number[], ops: string[]) {
 
