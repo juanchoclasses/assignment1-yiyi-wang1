@@ -87,7 +87,7 @@ function requestEditCell(docName: string, cell: string, user: string): Promise<b
 // this is the main function that runs the tests
 async function runTests() {
 
-    cleanFiles();
+    await cleanFiles();
     // first, create a document
     const testDocument1 = 'xxxtestDocument1';
     const testDocument2 = 'xxxtestDocument2';

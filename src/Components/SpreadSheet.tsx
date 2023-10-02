@@ -83,28 +83,32 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    */
   async function onCommandButtonClick(text: string): Promise<void> {
 
-
-    switch (text) {
-      case ButtonNames.edit_toggle:
-        if (currentlyEditing) {
-          spreadSheetClient.setEditStatus(false);
-        } else {
-          spreadSheetClient.setEditStatus(true);
-        }
-        setStatusString(spreadSheetClient.getEditStatusString());
-        break;
-
-      case ButtonNames.clear:
-        spreadSheetClient.removeToken();
-        break;
-
-      case ButtonNames.allClear:
-        spreadSheetClient.clearFormula();
-        break;
-
+    if (userName === "") {
+      alert("Please login first!")
+    } else {
+      switch (text) {
+        case ButtonNames.edit_toggle:
+          if (currentlyEditing) {
+            spreadSheetClient.setEditStatus(false);
+          } else {
+            spreadSheetClient.setEditStatus(true);
+          }
+          setStatusString(spreadSheetClient.getEditStatusString());
+          break;
+  
+        case ButtonNames.clear:
+          spreadSheetClient.removeToken();
+          break;
+  
+        case ButtonNames.allClear:
+          spreadSheetClient.clearFormula();
+          break;
+  
+      }
+      // update the display values
+      updateDisplayValues();
     }
-    // update the display values
-    updateDisplayValues();
+
   }
 
   /**
@@ -117,12 +121,17 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    * */
   function onButtonClick(event: React.MouseEvent<HTMLButtonElement>): void {
 
-    const text = event.currentTarget.textContent;
-    let trueText = text ? text : "";
-    spreadSheetClient.setEditStatus(true);
-    spreadSheetClient.addToken(trueText);
+    if (userName === "") {
+      alert("Please login first!")
+      event.preventDefault();
+    } else {
+      const text = event.currentTarget.textContent;
+      let trueText = text ? text : "";
+      spreadSheetClient.setEditStatus(true);
+      spreadSheetClient.addToken(trueText);
 
-    updateDisplayValues();
+      updateDisplayValues();
+    }
 
   }
 
@@ -137,25 +146,29 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    */
   function onCellClick(event: React.MouseEvent<HTMLButtonElement>): void {
 
-    const cellLabel = event.currentTarget.getAttribute("cell-label");
-    // calculate the current row and column of the clicked on cell
-
-    const editStatus = spreadSheetClient.getEditStatus();
-    let realCellLabel = cellLabel ? cellLabel : "";
-
-
-    // if the edit status is true then add the token to the machine
-    if (editStatus) {
-      spreadSheetClient.addCell(realCellLabel);  // this will never be ""
-      updateDisplayValues();
+    if (userName === "") {
+      alert("Please login first!")
+      event.preventDefault();
+    } else {
+      const cellLabel = event.currentTarget.getAttribute("cell-label");
+      // calculate the current row and column of the clicked on cell
+  
+      const editStatus = spreadSheetClient.getEditStatus();
+      let realCellLabel = cellLabel ? cellLabel : "";
+  
+  
+      // if the edit status is true then add the token to the machine
+      if (editStatus) {
+        spreadSheetClient.addCell(realCellLabel);  // this will never be ""
+        updateDisplayValues();
+      }
+      // if the edit status is false then set the current cell to the clicked on cell
+      else {
+        spreadSheetClient.requestViewByLabel(realCellLabel);
+  
+        updateDisplayValues();
+      }
     }
-    // if the edit status is false then set the current cell to the clicked on cell
-    else {
-      spreadSheetClient.requestViewByLabel(realCellLabel);
-
-      updateDisplayValues();
-    }
-
   }
 
   return (
